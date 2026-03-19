@@ -1,0 +1,13 @@
+reports_dir: reports
+enable_drive: true
+enable_gemini_logs: true
+enable_perplexity_logs: true
+default_start_offset_days: 1
+default_end_offset_days: 0
+session_gap_minutes: 30
+google_credentials_path: ~/.pa_assistant/client_secret.json
+token_path: token.json
+
+connectors:
+  gemini_log_path: ~/.personal-summarizer/gemini_history.json
+  perplexity_log_path: ~/.personal-summarizer/perplexity_history.json

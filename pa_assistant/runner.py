@@ -14,6 +14,7 @@ from .connectors import (
     fetch_perplexity_activities,
 )
 from .models import ActivityEntry
+from .processor import sessionize
 from .report import generate_markdown
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class RunnerConfig:
     perplexity_log_path: Optional[Path] = None
     default_start_offset_days: int = 1
     default_end_offset_days: int = 0
+    session_gap_minutes: int = 30
 
 
 def load_config(path: Optional[str]) -> RunnerConfig:
@@ -79,6 +81,7 @@ def load_config(path: Optional[str]) -> RunnerConfig:
         perplexity_log_path=Path(perp_path).expanduser() if perp_path else default_perp_path,
         default_start_offset_days=int(raw.get("default_start_offset_days", 1)),
         default_end_offset_days=int(raw.get("default_end_offset_days", 0)),
+        session_gap_minutes=int(raw.get("session_gap_minutes", 30)),
     )
 
 
@@ -112,6 +115,9 @@ def run_summary(
 
     if cfg.enable_perplexity_logs:
         activities.extend(fetch_perplexity_activities(start_date, end_date, config=cfg))
+
+    # Phase 1 Grouping
+    activities = sessionize(activities, gap_minutes=cfg.session_gap_minutes)
 
     # Generate Markdown
     markdown = generate_markdown(

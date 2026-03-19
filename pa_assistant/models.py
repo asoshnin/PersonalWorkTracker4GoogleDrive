@@ -24,5 +24,7 @@ class ActivityEntry:
     file_links: List[str] = field(default_factory=list)
     comments: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # Phase 1: Grouping
+    session_id: int = 0
     action_type: str = "EDIT"
-

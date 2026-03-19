@@ -6,6 +6,12 @@ enable_perplexity_logs: true
 # Path to a Google OAuth 2.0 client secrets JSON.
 google_credentials_path: /absolute/path/to/client_secret.json
 
+default_start_offset_days: 1
+default_end_offset_days: 0
+
+# Minutes of inactivity that define a new session
+session_gap_minutes: 30
+
 # Path where the OAuth 2.0 refreshable token will be saved.
 token_path: token.json
 
