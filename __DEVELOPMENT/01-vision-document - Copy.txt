@@ -1,0 +1,211 @@
+# Vision Document: Personal Work Summarizer
+
+## Executive Summary
+
+The Personal Work Summarizer is an intelligent aggregation tool designed to consolidate user activity across multiple AI platforms—Google Gemini, Perplexity, and Google Cloud—into a unified, Markdown-formatted temporal log. This tool addresses the growing need for professionals and researchers to maintain comprehensive records of their AI-assisted work across different platforms.
+
+---
+
+## 1. Value Proposition
+
+### Problem Statement
+
+In today's AI-augmented workflow, professionals interact with multiple AI platforms throughout their workday:
+- **Google Gemini** for general AI assistance and creative tasks
+- **Perplexity** for research and fact-checking
+- **Google Cloud** for document creation, storage, and collaboration
+
+Currently, there is no unified way to track, review, and report on all AI-assisted activities across these platforms. Users must manually log into each platform, export data separately, and compile reports—a time-consuming and error-prone process.
+
+### Solution
+
+The Personal Work Summarizer provides:
+1. **Unified Activity Log**: A single, consolidated view of all AI platform interactions
+2. **Temporal Organization**: Activities sorted by date/time for easy chronological review
+3. **Markdown Output**: Universal format compatible with documentation systems, wikis, and version control
+4. **Automated Aggregation**: Minimal manual intervention required
+
+### Target Benefits
+
+| Stakeholder | Benefit |
+|-------------|---------|
+| Researchers | Track AI-assisted research across platforms |
+| Developers | Maintain logs of code assistance and documentation |
+| Project Managers | Generate work summaries for reporting |
+| Compliance Teams | Create audit trails of AI usage |
+
+---
+
+## 2. Target User Flow
+
+### Primary User Journey
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PERSONAL WORK SUMMARIZER                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Step 1: Configuration                                          │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  • Enter API credentials (Gemini, Perplexity)            │  │
+│  │  • Configure Google Cloud OAuth                          │  │
+│  │  • Set date range for aggregation                        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           ↓                                      │
+│  Step 2: Data Fetching                                          │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  • Query Gemini API for chat history                     │  │
+│  │  • Query Perplexity API for conversations                │  │
+│  │  • Query Google Drive/Docs for activity logs             │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           ↓                                      │
+│  Step 3: Processing & Aggregation                               │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  • Normalize timestamps to UTC                           │  │
+│  │  • Extract work descriptions                             │  │
+│  │  • Identify related file links                           │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           ↓                                      │
+│  Step 4: Output Generation                                      │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  • Generate Markdown table                               │  │
+│  │  • Export to file or clipboard                           │  │
+│  │  • Optional: Save to Google Docs                         │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### User Flow Steps
+
+1. **Initial Setup** (One-time)
+   - Install the application
+   - Configure API keys for Gemini and Perplexity
+   - Set up Google Cloud OAuth 2.0 credentials
+   - Define default output preferences
+
+2. **Daily Usage**
+   - Launch the summarizer
+   - Select date range (default: last 24 hours)
+   - Click "Generate Summary"
+   - Review the aggregated output
+   - Export or copy to documentation system
+
+3. **Reporting Mode**
+   - Select extended date range (weekly/monthly)
+   - Apply filters by platform or activity type
+   - Generate comprehensive report
+   - Export in Markdown format
+
+---
+
+## 3. Scope Boundaries
+
+### In Scope
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Gemini Integration | Fetch chat history and conversations via API | P0 |
+| Perplexity Integration | Retrieve conversation threads and queries | P0 |
+| Google Cloud Integration | Access Drive file activity and Docs edit history | P0 |
+| Markdown Table Output | Standard format with 5 columns | P0 |
+| Date Range Filtering | Custom time periods for data retrieval | P1 |
+| OAuth 2.0 Support | Secure authentication for Google Cloud | P1 |
+| Local Export | Save output to local files | P1 |
+| CLI Interface | Command-line tool for automation | P2 |
+| Configuration Profiles | Save multiple credential sets | P2 |
+| Activity Categorization | Auto-tag activities by type | P3 |
+
+### Out of Scope (Future Versions)
+
+| Feature | Reason |
+|---------|--------|
+| Real-time Sync | Requires persistent connection; add complexity |
+| Web Dashboard | Focus on CLI/tool output first |
+| Multi-user Support | Personal tool; enterprise features later |
+| Mobile App | Desktop-first approach |
+| Advanced Analytics | Beyond simple aggregation |
+| API for Third Parties | Internal tool only |
+
+### Technical Constraints
+
+1. **Rate Limits**: Must respect API rate limits for all platforms
+2. **Authentication**: Use OAuth 2.0 where available; API keys as fallback
+3. **Data Privacy**: All processing happens locally; no external data transmission
+4. **Output Format**: Strictly Markdown table format for compatibility
+
+---
+
+## 4. Success Metrics
+
+### Key Performance Indicators
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Data Completeness | >95% | % of available activities captured |
+| Processing Time | <30 seconds | Time to generate weekly summary |
+| Format Accuracy | 100% | Valid Markdown output |
+| Error Rate | <2% | Failed API calls |
+
+### User Satisfaction Criteria
+
+- User can generate a complete daily summary in under 1 minute
+- Output requires no manual formatting before use
+- All three platforms contribute data to the summary
+- Clear error messages when API issues occur
+
+---
+
+## 5. Timeline & Milestones
+
+| Phase | Duration | Deliverable |
+|-------|----------|-------------|
+| Phase 1: Core Integration | 2 weeks | Gemini + Perplexity API integration |
+| Phase 2: Google Cloud | 1 week | Drive/Docs activity retrieval |
+| Phase 3: Aggregation Engine | 1 week | Unified data processing |
+| Phase 4: Output Generation | 1 week | Markdown table formatter |
+| Phase 5: Testing & Polish | 1 week | Error handling, documentation |
+
+---
+
+## 6. Appendix
+
+### Supported Platforms
+
+| Platform | API Available | Authentication | Rate Limit |
+|----------|---------------|----------------|------------|
+| Google Gemini | Yes | API Key | 60 req/min |
+| Perplexity | Yes | API Key | Varies by tier |
+| Google Drive | Yes | OAuth 2.0 | 1000 req/day |
+| Google Docs | Yes | OAuth 2.0 | 300 req/min |
+
+### Reference Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Personal Work Summarizer                │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Gemini    │  │  Perplexity │  │ Google Cloud│     │
+│  │   Client    │  │   Client    │  │   Client    │     │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘     │
+│         │                │                │             │
+│         └────────────────┼────────────────┘             │
+│                          │                               │
+│                  ┌───────▼───────┐                       │
+│                  │  Aggregator   │                       │
+│                  │    Engine     │                       │
+│                  └───────┬───────┘                       │
+│                          │                               │
+│                  ┌───────▼───────┐                       │
+│                  │   Markdown    │                       │
+│                  │   Generator   │                       │
+│                  └───────────────┘                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+*Document Version: 1.0*  
+*Created: March 2024*  
+*Author: Multi-Agent Pipeline*

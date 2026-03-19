@@ -1,0 +1,308 @@
+# Product Requirements Document (PRD)
+
+## Personal Work Summarizer
+
+**Version:** 1.0  
+**Status:** Approved  
+**Date:** March 2024  
+**Author:** Multi-Agent Pipeline
+
+---
+
+## 1. Introduction
+
+### 1.1 Purpose
+
+This Product Requirements Document defines the functional and technical specifications for the Personal Work Summarizer—a tool that aggregates user activity across Google Gemini, Perplexity, and Google Cloud platforms into a unified Markdown-formatted temporal log.
+
+### 1.2 Scope
+
+The Personal Work Summarizer will:
+- Connect to three AI platforms via their respective APIs
+- Retrieve user activity and conversation history
+- Aggregate data into a standardized format
+- Output a Markdown table with specific columns
+
+### 1.3 Definitions
+
+| Term | Definition |
+|------|------------|
+| Activity | Any user interaction with an AI platform (query, response, file edit) |
+| Platform | A connected service (Gemini, Perplexity, Google Cloud) |
+| Temporal Log | Chronologically ordered record of activities |
+| Markdown Table | Formatted text output with rows and columns |
+
+---
+
+## 2. API Endpoints
+
+### 2.1 Gemini API Endpoints
+
+| Endpoint | Method | Purpose | Parameters |
+|----------|--------|---------|------------|
+| `GET /v1/models` | GET | List available models | None |
+| `POST /v1/chat/completions` | POST | Generate completion | `messages[]`, `model`, `temperature` |
+| `GET /v1/models/{model}` | GET | Get model info | `model` (path) |
+
+**Authentication**: API Key (header: `x-goog-api-key`)
+
+**Base URL**: `https://generativelanguage.googleapis.com`
+
+### 2.2 Perplexity API Endpoints
+
+| Endpoint | Method | Purpose | Parameters |
+|----------|--------|---------|------------|
+| `POST /chat/completions` | POST | Generate completion | `messages[]`, `model`, `max_tokens` |
+| `GET /models` | GET | List available models | None |
+
+**Authentication**: Bearer Token (header: `Authorization`)
+
+**Base URL**: `https://api.perplexity.ai`
+
+### 2.3 Google Cloud API Endpoints
+
+| Endpoint | Method | Purpose | Parameters |
+|----------|--------|---------|------------|
+| `GET /drive/v3/files` | GET | List Drive files | `pageSize`, `fields`, `q` |
+| `GET /drive/v3/files/{fileId}` | GET | Get file metadata | `fileId`, `fields` |
+| `GET /drive/v3/files/{fileId}/revisions` | GET | Get file revisions | `fileId`, `fields` |
+| `GET /docs/v1/documents/{documentId}` | GET | Get document content | `documentId` |
+
+**Authentication**: OAuth 2.0
+
+**Base URL**: `https://www.googleapis.com`
+
+---
+
+## 3. Data Schema
+
+### 3.1 Output Table Schema
+
+The Markdown output table must contain exactly 5 columns:
+
+| Column | Type | Description | Format |
+|--------|------|-------------|--------|
+| Date/Time | string | ISO 8601 timestamp of activity | `YYYY-MM-DD HH:MM:SS UTC` |
+| Platform | string | Source platform name | `Gemini`, `Perplexity`, or `Google Cloud` |
+| Work Done | string | Description of activity performed | Free text, max 500 chars |
+| File Links | string[] | Related file URLs (if any) | Markdown links `[text](url)` |
+| Comments | string | Additional notes or context | Free text, max 200 chars |
+
+### 3.2 Markdown Output Format
+
+```markdown
+| Date/Time | Platform | Work Done | File Links | Comments |
+|-----------|----------|-----------|------------|----------|
+| 2024-03-15 10:30:00 UTC | Gemini | Queried AI for code review | - | Code review session |
+| 2024-03-15 11:45:00 UTC | Perplexity | Researched API documentation | - | Found rate limits |
+| 2024-03-15 14:00:00 UTC | Google Cloud | Edited project documentation | [Project Plan](https://docs.google.com/...) | Updated timeline |
+```
+
+### 3.3 Internal Data Model
+
+```typescript
+interface ActivityEntry {
+  timestamp: Date;           // ISO 8601
+  platform: Platform;        // 'gemini' | 'perplexity' | 'gcloud'
+  activity_type: string;     // 'chat' | 'query' | 'file_edit' | etc.
+  description: string;       // Work done description
+  file_links: string[];      // URLs to related files
+  comments: string;          // Additional context
+  metadata: {
+    model?: string;          // AI model used
+    tokens_used?: number;    // Token count if applicable
+    duration_ms?: number;    // Duration of activity
+  }
+}
+
+type Platform = 'gemini' | 'perplexity' | 'gcloud';
+```
+
+---
+
+## 4. Functional Requirements
+
+### 4.1 Core Features
+
+| ID | Requirement | Priority | Description |
+|----|-------------|----------|-------------|
+| FR-001 | Data Aggregation | P0 | Collect activity from all three platforms |
+| FR-002 | Date Range Filtering | P0 | Filter by start/end date |
+| FR-003 | Markdown Output | P0 | Generate valid Markdown table |
+| FR-004 | Platform Identification | P0 | Correctly identify source platform |
+| FR-005 | File Link Extraction | P1 | Extract and format file URLs |
+| FR-006 | Comment Support | P2 | Allow manual comment entry |
+
+### 4.2 Configuration Requirements
+
+| ID | Requirement | Priority | Description |
+|----|-------------|----------|-------------|
+| FR-010 | API Key Management | P0 | Secure storage of API credentials |
+| FR-011 | OAuth 2.0 Flow | P1 | Support Google OAuth for Cloud access |
+| FR-012 | Profile Management | P2 | Multiple credential configurations |
+| FR-013 | Default Settings | P2 | Configurable defaults for date ranges |
+
+### 4.3 Output Requirements
+
+| ID | Requirement | Priority | Description |
+|----|-------------|----------|-------------|
+| FR-020 | File Export | P0 | Save output to .md file |
+| FR-021 | Clipboard Copy | P1 | Copy output to clipboard |
+| FR-022 | Append Mode | P2 | Append to existing file |
+| FR-023 | Custom Filename | P2 | User-defined output filename |
+
+---
+
+## 5. Non-Functional Requirements
+
+### 5.1 Performance
+
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-001 | API Response Timeout | 30 seconds |
+| NFR-002 | Full Aggregation Time | <60 seconds for 1000 entries |
+| NFR-003 | Memory Usage | <500MB |
+
+### 5.2 Reliability
+
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-010 | Error Recovery | Retry 3x with exponential backoff |
+| NFR-011 | Partial Results | Continue on single platform failure |
+| NFR-012 | Data Integrity | Validate all timestamps |
+
+### 5.3 Security
+
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-020 | Credential Storage | System keyring |
+| NFR-021 | Data Transmission | HTTPS only |
+| NFR-022 | Local Processing | No external servers |
+
+---
+
+## 6. Acceptance Criteria
+
+### 6.1 User Story Acceptance
+
+**US-001: Aggregate Daily Activity**
+
+```gherkin
+GIVEN the user has configured API credentials
+WHEN the user requests a daily summary
+THEN the system fetches activity from all three platforms
+AND outputs a valid Markdown table
+AND includes all activities from the specified date
+```
+
+**US-002: Filter by Date Range**
+
+```gherkin
+GIVEN the user specifies a date range
+WHEN the aggregation runs
+THEN only activities within the range are included
+AND activities are sorted chronologically
+```
+
+**US-003: Handle API Failures**
+
+```gherkin
+GIVEN one platform API is unavailable
+WHEN the aggregation runs
+THEN activities from available platforms are returned
+AND an error message indicates the failed platform
+AND the output is still valid Markdown
+```
+
+**US-004: Format File Links**
+
+```gherkin
+GIVEN an activity has related files
+WHEN the output is generated
+THEN file links are formatted as Markdown links
+AND multiple links are separated by commas
+AND broken links are marked as [unavailable]
+```
+
+### 6.2 Technical Acceptance
+
+| Criterion | Verification |
+|-----------|--------------|
+| Valid Markdown output | Parse with markdown library |
+| Correct column count | Verify exactly 5 columns |
+| ISO timestamp format | Regex validation |
+| UTF-8 encoding | Character encoding check |
+| No duplicate entries | Unique check on (timestamp, platform) |
+
+---
+
+## 7. API Rate Limits
+
+### 7.1 Rate Limit Handling
+
+| Platform | Rate Limit | Strategy |
+|----------|------------|----------|
+| Gemini | 60 req/min | Token bucket, 1 req/sec |
+| Perplexity | Varies | Exponential backoff |
+| Google Drive | 1000 req/day | Batch requests |
+
+### 7.2 Error Codes
+
+| Code | Platform | Meaning | Action |
+|------|----------|---------|--------|
+| 429 | All | Rate limit exceeded | Wait and retry |
+| 401 | All | Unauthorized | Check credentials |
+| 403 | Google | Insufficient permissions | Check OAuth scopes |
+| 404 | Google | Resource not found | Skip and log |
+| 500 | All | Server error | Retry with backoff |
+
+---
+
+## 8. Dependencies
+
+### 8.1 External Dependencies
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| google-generativeai | >=0.3.0 | Gemini API client |
+| httpx | >=0.25.0 | HTTP client |
+| google-auth-oauthlib | >=1.0.0 | OAuth flow |
+| google-api-python-client | >=2.0.0 | Google Cloud APIs |
+| keyring | >=24.0.0 | Secure credential storage |
+
+### 8.2 Python Requirements
+
+```
+google-generativeai>=0.3.0
+httpx>=0.25.0
+google-auth-oauthlib>=1.0.0
+google-api-python-client>=2.0.0
+keyring>=24.0.0
+python-dateutil>=2.8.0
+```
+
+---
+
+## 9. Milestones
+
+| Milestone | Date | Deliverable |
+|-----------|------|-------------|
+| M1: Core Framework | Week 2 | Project structure, config system |
+| M2: Gemini Integration | Week 3 | Working Gemini connector |
+| M3: Perplexity Integration | Week 4 | Working Perplexity connector |
+| M4: Google Cloud Integration | Week 5 | Drive/Docs connectors |
+| M5: Aggregation Engine | Week 6 | Unified data processing |
+| M6: Output Generator | Week 7 | Markdown formatter |
+| M7: Testing & QA | Week 8 | Full test coverage |
+
+---
+
+## 10. Revision History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | March 2024 | Multi-Agent Pipeline | Initial PRD |
+
+---
+
+*End of Product Requirements Document*
