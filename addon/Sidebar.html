@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('Stylesheet').getContent(); ?>
+  </head>
+  <body>
+    <div class="sidebar-container">
+      <div class="header">
+        <h1 class="title">📋 PA Assistant</h1>
+        <div class="subtitle" id="timezoneLabel">Loading timezone...</div>
+      </div>
+
+      <div class="section" id="generateSection">
+        <label for="period">Period</label>
+        <select id="period" class="full-width">
+          <option value="24h" selected>Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="this-week">This week</option>
+          <option value="last-week">Last week</option>
+        </select>
+
+        <label for="focus">Focus (optional)</label>
+        <input type="text" id="focus" class="full-width" placeholder="e.g. VeriQ onboarding">
+
+        <label for="sessionGap">Session gap</label>
+        <select id="sessionGap" class="full-width">
+          <option value="15">15 minutes</option>
+          <option value="30" selected>30 minutes</option>
+          <option value="60">60 minutes</option>
+          <option value="120">2 hours</option>
+        </select>
+
+        <button id="generateBtn" class="btn-primary" onclick="generateReport()">▶ Generate Report</button>
+      </div>
+
+      <div id="loadingState" class="state-container hidden">
+        <div class="spinner"></div>
+        <p>Fetching your Drive activity...</p>
+      </div>
+
+      <div id="successState" class="state-container hidden">
+        <div class="success-icon">✓</div>
+        <p class="success-text">Report ready!</p>
+      </div>
+      
+      <div id="errorState" class="state-container hidden">
+        <p id="errorMsg" class="error-text"></p>
+      </div>
+
+      <div class="section hidden" id="lastReportSection">
+        <hr class="divider">
+        <h3 class="section-title">Last Report</h3>
+        <button id="openDocBtn" class="btn-secondary" onclick="openDoc()">📄 Open Last Report</button>
+        <button id="openSheetBtn" class="btn-secondary" onclick="openSheet()">📊 Open Last Sheet</button>
+        <p class="meta-text" id="generatedTime"></p>
+      </div>
+    </div>
+
+    <script>
+      let lastDocUrl = "";
+      let lastSheetUrl = "";
+
+      window.onload = function() {
+        google.script.run.withSuccessHandler(function(tz) {
+          document.getElementById('timezoneLabel').textContent = tz;
+        }).getUserTimezone();
+      };
+
+      function generateReport() {
+        // Collect params
+        const params = {
+          period: document.getElementById('period').value,
+          focus: document.getElementById('focus').value,
+          sessionGap: document.getElementById('sessionGap').value
+        };
+
+        // UI transitions
+        document.getElementById('generateBtn').disabled = true;
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('successState').classList.add('hidden');
+        document.getElementById('errorState').classList.add('hidden');
+        document.getElementById('lastReportSection').classList.add('hidden');
+
+        // Call server
+        google.script.run
+          .withSuccessHandler(onSuccess)
+          .withFailureHandler(onFailure)
+          .generateReport(params);
+      }
+
+      function onSuccess(result) {
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('loadingState').classList.add('hidden');
+        
+        if (result.error) {
+          showError(result.error);
+          return;
+        }
+
+        document.getElementById('successState').classList.remove('hidden');
+        
+        lastDocUrl = result.docUrl;
+        lastSheetUrl = result.sheetUrl;
+        
+        const generatedAt = new Date().toLocaleTimeString();
+        document.getElementById('generatedTime').textContent = `Generated: ${generatedAt}`;
+        document.getElementById('lastReportSection').classList.remove('hidden');
+      }
+
+      function onFailure(error) {
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('loadingState').classList.add('hidden');
+        showError(error.message || error.toString());
+      }
+      
+      function showError(msg) {
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = msg;
+      }
+
+      function openDoc() {
+        if (lastDocUrl) window.open(lastDocUrl, '_blank');
+      }
+
+      function openSheet() {
+        if (lastSheetUrl) window.open(lastSheetUrl, '_blank');
+      }
+    </script>
+  </body>
+</html>

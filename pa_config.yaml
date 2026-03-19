@@ -5,6 +5,7 @@ enable_perplexity_logs: true
 default_start_offset_days: 1
 default_end_offset_days: 0
 session_gap_minutes: 30
+timezone: Europe/Amsterdam
 google_credentials_path: ~/.pa_assistant/client_secret.json
 token_path: token.json
 

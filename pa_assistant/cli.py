@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
         "--period",
         type=str,
         required=False,
-        help="Time period (e.g. 'yesterday')",
+        help="Time period: today, yesterday, 7d, this-week, last-week",
     )
     parser.add_argument(
         "--config",
@@ -52,13 +52,34 @@ def main() -> None:
 
     args = parse_args()
 
+    if args.period and (args.start_date or args.end_date):
+        raise SystemExit("Error: --period and --start-date/--end-date are mutually exclusive.")
+
     try:
         cfg = load_config(args.config)
         now = datetime.now()
         
-        if getattr(args, "period", None) == "yesterday":
-            start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = (now - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
+        if args.period:
+            if args.period == "today":
+                start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
+            elif args.period == "yesterday":
+                start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = (now - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
+            elif args.period == "7d":
+                start_date = now - timedelta(days=7)
+                end_date = now
+            elif args.period == "this-week":
+                days_to_monday = now.weekday()
+                start_date = (now - timedelta(days=days_to_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now
+            elif args.period == "last-week":
+                days_to_monday = now.weekday()
+                start_date = (now - timedelta(days=days_to_monday + 7)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = (now - timedelta(days=days_to_monday + 1)).replace(hour=23, minute=59, second=59, microsecond=999999)
+            else:
+                raise SystemExit(f"Error: Unknown period '{args.period}'")
+
         elif args.start_date and args.end_date:
             start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
             end_date = datetime.strptime(args.end_date, "%Y-%m-%d")

@@ -12,6 +12,10 @@ default_end_offset_days: 0
 # Minutes of inactivity that define a new session
 session_gap_minutes: 30
 
+# IANA timezone name for report timestamps. Default: UTC
+# Examples: Europe/Amsterdam, America/New_York, Asia/Tokyo
+timezone: Europe/Amsterdam
+
 # Path where the OAuth 2.0 refreshable token will be saved.
 token_path: token.json
 

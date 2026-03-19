@@ -4,3 +4,5 @@ google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
 python-dateutil>=2.8.0
 PyYAML>=6.0.0
+Jinja2>=3.1.0
+tzdata

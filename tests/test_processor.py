@@ -3,18 +3,18 @@ from datetime import datetime, timedelta
 from typing import List
 
 from pa_assistant.models import ActivityEntry, Platform
-from pa_assistant.processor import sessionize
+from pa_assistant.processor import sessionize, deduplicate
 
-def create_activity(ts: datetime) -> ActivityEntry:
+def create_activity(ts: datetime, desc: str = "test", session_id: int = 0) -> ActivityEntry:
     return ActivityEntry(
         timestamp=ts,
         platform=Platform.GEMINI,
-        description="test",
+        description=desc,
         file_links=[],
         comments="",
         metadata={},
         action_type="EDIT",
-        session_id=0
+        session_id=session_id
     )
 
 def test_single_activity():
@@ -50,17 +50,9 @@ def test_all_within_gap():
         assert a.session_id == 1
 
 def test_exactly_at_threshold():
-    # Threshold creates a new session if delta > gap_minutes
+    # Gap from a1 to a2 is 30 mins
     start = datetime(2026, 3, 19, 10, 0, 0)
     a1 = create_activity(start)
-    a2 = create_activity(start + timedelta(minutes=30))
-    a3 = create_activity(start + timedelta(minutes=31))
-    
-    # 30 mins is NOT > 30 mins, so a2 is in session 1
-    # 31 mins from start + 30m, actually gap between a2 and a3 is 1 min!
-    # Let's adjust to test the exactly threshold logic properly:
-    
-    # Gap from a1 to a2 is 30 mins
     a_gap1 = create_activity(start + timedelta(minutes=30))
     # Gap from a2 to a3 is 31 mins
     a_gap2 = create_activity(start + timedelta(minutes=30) + timedelta(minutes=31))
@@ -70,3 +62,27 @@ def test_exactly_at_threshold():
     assert result[0].session_id == 1
     assert result[1].session_id == 1
     assert result[2].session_id == 2
+
+def test_deduplicate_with_duplicates():
+    start = datetime(2026, 3, 19, 10, 0, 0)
+    a1 = create_activity(start, desc="Edited: file1.txt", session_id=1)
+    a2 = create_activity(start + timedelta(minutes=5), desc="Edited: file1.txt", session_id=1)
+    a3 = create_activity(start + timedelta(minutes=10), desc="Edited: file2.txt", session_id=1)
+    
+    result = deduplicate([a1, a2, a3])
+    
+    assert len(result) == 2
+    # Ensure it kept a2 over a1 because it has the max timestamp
+    assert result[0].timestamp == a2.timestamp
+    assert result[1].timestamp == a3.timestamp
+
+def test_deduplicate_without_duplicates():
+    start = datetime(2026, 3, 19, 10, 0, 0)
+    a1 = create_activity(start, desc="Edited: file1.txt", session_id=1)
+    a2 = create_activity(start + timedelta(minutes=5), desc="Edited: file2.txt", session_id=1)
+    a3 = create_activity(start + timedelta(minutes=10), desc="Edited: file1.txt", session_id=1)
+    a3.action_type = "CREATE"
+    
+    result = deduplicate([a1, a2, a3])
+    
+    assert len(result) == 3

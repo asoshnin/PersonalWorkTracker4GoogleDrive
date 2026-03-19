@@ -14,7 +14,7 @@ from .connectors import (
     fetch_perplexity_activities,
 )
 from .models import ActivityEntry
-from .processor import sessionize
+from .processor import sessionize, deduplicate
 from .report import generate_markdown
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ class RunnerConfig:
     default_start_offset_days: int = 1
     default_end_offset_days: int = 0
     session_gap_minutes: int = 30
+    timezone: str = "UTC"
 
 
 def load_config(path: Optional[str]) -> RunnerConfig:
@@ -82,6 +83,7 @@ def load_config(path: Optional[str]) -> RunnerConfig:
         default_start_offset_days=int(raw.get("default_start_offset_days", 1)),
         default_end_offset_days=int(raw.get("default_end_offset_days", 0)),
         session_gap_minutes=int(raw.get("session_gap_minutes", 30)),
+        timezone=str(raw.get("timezone", "UTC")),
     )
 
 
@@ -116,8 +118,9 @@ def run_summary(
     if cfg.enable_perplexity_logs:
         activities.extend(fetch_perplexity_activities(start_date, end_date, config=cfg))
 
-    # Phase 1 Grouping
+    # Phase 1 Grouping & Deduplication
     activities = sessionize(activities, gap_minutes=cfg.session_gap_minutes)
+    activities = deduplicate(activities)
 
     # Generate Markdown
     markdown = generate_markdown(
@@ -125,19 +128,36 @@ def run_summary(
         start_date=start_date,
         end_date=end_date,
         focus_prompt=focus_prompt,
+        timezone_str=cfg.timezone
     )
 
-    # Determine output path (per-day naming for simplicity)
-    cfg.reports_dir.mkdir(parents=True, exist_ok=True)
-    if start_date.date() == end_date.date():
-        filename = f"PA-{start_date.date().isoformat()}.md"
-    else:
-        filename = f"PA-{start_date.date().isoformat()}_to_{end_date.date().isoformat()}.md"
-    output_path = cfg.reports_dir / filename
+    # Determine report filename logic securely prioritizing ISO weeks bounding securely
+    is_week_report = False
+    
+    # 1. Exactly Monday to Sunday (last-week or exactly one ISO week)
+    if start_date.weekday() == 0 and start_date.hour == 0 and start_date.minute == 0:
+        if end_date.weekday() == 6 and end_date.hour == 23 and end_date.minute == 59:
+            is_week_report = True
+        # 2. this-week (Monday to today's current time, where today is within the same week)
+        elif (end_date - start_date).days < 7 and end_date.date() >= start_date.date():
+             is_week_report = True
 
-    with output_path.open("w", encoding="utf-8") as f:
+    if is_week_report:
+        iso_year, iso_week, _ = start_date.isocalendar()
+        report_filename = f"PA_Report_{iso_year}-W{iso_week:02d}.md"
+    else:
+        if start_date.date() == end_date.date():
+            report_filename = f"PA_Report_{start_date.date().isoformat()}.md"
+        else:
+            report_filename = f"PA_Report_{start_date.date().isoformat()}_to_{end_date.date().isoformat()}.md"
+
+    cfg.reports_dir.mkdir(parents=True, exist_ok=True)
+    out_path = Path(cfg.reports_dir) / report_filename
+
+    with out_path.open("w", encoding="utf-8") as f:
         f.write(markdown)
 
-    logger.info("Summary written to %s", output_path)
-    return activities, markdown, output_path
+    logger.info("Summary written to %s", out_path)
+    return activities, markdown, out_path
+
 

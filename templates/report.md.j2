@@ -1,0 +1,28 @@
+# 📋 PA REPORT · {{ start_date }} to {{ end_date }}
+
+> ⏱ **{{ time_str }}** across **{{ sessions|length }} sessions** · 📁 **{{ total }} files** ({{ edited }} edited, {{ created }} created, {{ other }} other) · 🔥 **{{ most_active_day }}** most active · 📌 {{ focus_prompt if focus_prompt else 'none' }}
+
+---
+{% for s in sessions %}
+## 🟦 Session {{ s.id }} · {{ s.weekday }} {{ s.date_str }} · {{ s.start_time }}–{{ s.end_time }} · {{ s.dur_str }} · Mostly {{ s.dominant_action }}
+
+| Time | Action | File | Link |
+|---|---|---|---|
+{%- for act in s.grouped_acts %}
+| {{ act.time_range }} | {{ act.actions }} | {{ act.file_name }} | {% if act.link != "-" %}[Open ↗]({{ act.link }}){% else %}-{% endif %} |
+{%- endfor %}
+{% endfor %}
+---
+
+## 🚀 Resume Here
+
+| | File | Link | Time |
+|---|---|---|---|
+{%- if resume_here.last_edited_file %}
+| Last edited | {{ resume_here.last_edited_file }} | {% if resume_here.last_edited_link != "-" %}[Open ↗]({{ resume_here.last_edited_link }}){% else %}-{% endif %} | {{ resume_here.last_edited_ts }} |
+{%- endif %}
+{%- if resume_here.last_created_file %}
+| Last created | {{ resume_here.last_created_file }} | {% if resume_here.last_created_link != "-" %}[Open ↗]({{ resume_here.last_created_link }}){% else %}-{% endif %} | {{ resume_here.last_created_ts }} |
+{%- endif %}
+
+**Last session ended:** {{ resume_here.last_session_end }}
