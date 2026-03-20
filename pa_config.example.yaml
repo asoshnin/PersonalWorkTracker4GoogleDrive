@@ -3,6 +3,11 @@ enable_drive: true
 enable_gemini_logs: true
 enable_perplexity_logs: true
 
+# Note for Apps Script Add-on users:
+# To use the Google Picker for specific folder selection, you must:
+# 1. Create a Picker API key (Google Cloud Console -> Credentials)
+# 2. Add it to Apps Script Project Settings -> Script Properties as DEVELOPER_KEY
+
 # Path to a Google OAuth 2.0 client secrets JSON.
 google_credentials_path: /absolute/path/to/client_secret.json
 

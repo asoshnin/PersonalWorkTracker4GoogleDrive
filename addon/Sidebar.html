@@ -20,8 +20,32 @@
           <option value="last-week">Last week</option>
         </select>
 
-        <label for="focus">Focus (optional)</label>
-        <input type="text" id="focus" class="full-width" placeholder="e.g. VeriQ onboarding">
+        <label>Scan scope</label>
+        <div class="radio-group" style="margin-bottom: 15px;">
+          <div>
+            <input type="radio" id="scope_my_drive" name="scanScope" value="my_drive" checked onchange="togglePickerUI()">
+            <label for="scope_my_drive" style="display:inline; margin-left:4px; font-weight:normal;">My Drive only</label>
+          </div>
+          <div style="margin-top:4px;">
+            <input type="radio" id="scope_all_drives" name="scanScope" value="all_drives" onchange="togglePickerUI()">
+            <label for="scope_all_drives" style="display:inline; margin-left:4px; font-weight:normal;">All Drives incl. Shared</label>
+          </div>
+          <div style="margin-top:4px;">
+            <input type="radio" id="scope_specific" name="scanScope" value="specific_folder" onchange="togglePickerUI()">
+            <label for="scope_specific" style="display:inline; margin-left:4px; font-weight:normal;">Specific folder</label>
+          </div>
+        </div>
+
+        <div id="pickerSection" class="hidden" style="margin-bottom: 15px;">
+          <button id="chooseFolderBtn" class="btn-secondary" onclick="openPickerInit()">📁 Choose Folder</button>
+          <div id="selectedFolderText" style="margin-top: 8px; font-size: 13px; color: #1a73e8; font-weight: 500;"></div>
+        </div>
+
+        <label for="outputFormat">Output</label>
+        <select id="outputFormat" class="full-width">
+          <option value="sheet_only" selected>Sheet only</option>
+          <option value="sheet_and_doc">Sheet + Doc</option>
+        </select>
 
         <label for="sessionGap">Session gap</label>
         <select id="sessionGap" class="full-width">
@@ -58,6 +82,8 @@
     </div>
 
     <script>
+      let selectedFolderId = "";
+      let selectedFolderName = "";
       let lastDocUrl = "";
       let lastSheetUrl = "";
 
@@ -66,12 +92,61 @@
           document.getElementById('timezoneLabel').textContent = tz;
         }).getUserTimezone();
       };
+      
+      function togglePickerUI() {
+        const scope = document.querySelector('input[name="scanScope"]:checked').value;
+        if (scope === 'specific_folder') {
+          document.getElementById('pickerSection').classList.remove('hidden');
+        } else {
+          document.getElementById('pickerSection').classList.add('hidden');
+        }
+      }
+
+      function openPickerInit() {
+        document.getElementById('chooseFolderBtn').disabled = true;
+        document.getElementById('chooseFolderBtn').textContent = "Opening...";
+        
+        google.script.run
+          .withSuccessHandler(function() {
+            document.getElementById('chooseFolderBtn').disabled = false;
+            document.getElementById('chooseFolderBtn').textContent = "📁 Choose Folder";
+            pollForFolderSelection();
+          })
+          .withFailureHandler(function(err) {
+             document.getElementById('chooseFolderBtn').disabled = false;
+             document.getElementById('chooseFolderBtn').textContent = "📁 Choose Folder";
+             showError("Failed to open picker: " + err.message);
+          })
+          .showPickerDialog();
+      }
+
+      function pollForFolderSelection() {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result && result.folderId) {
+              selectedFolderId = result.folderId;
+              selectedFolderName = result.folderName;
+              document.getElementById('selectedFolderText').textContent = 'Selected: ' + result.folderName + ' ✓';
+            }
+          })
+          .getSelectedFolder();
+      }
 
       function generateReport() {
         // Collect params
+        const scanScope = document.querySelector('input[name="scanScope"]:checked').value;
+        
+        if (scanScope === 'specific_folder' && !selectedFolderId) {
+          showError("Please select a folder first");
+          return;
+        }
+
         const params = {
           period: document.getElementById('period').value,
-          focus: document.getElementById('focus').value,
+          scanScope: scanScope,
+          folderId: selectedFolderId,
+          folderName: selectedFolderName,
+          outputFormat: document.getElementById('outputFormat').value,
           sessionGap: document.getElementById('sessionGap').value
         };
 
@@ -102,6 +177,13 @@
         
         lastDocUrl = result.docUrl;
         lastSheetUrl = result.sheetUrl;
+        
+        const docBtn = document.getElementById('openDocBtn');
+        if (lastDocUrl) {
+          docBtn.style.display = 'block';
+        } else {
+          docBtn.style.display = 'none';
+        }
         
         const generatedAt = new Date().toLocaleTimeString();
         document.getElementById('generatedTime').textContent = `Generated: ${generatedAt}`;

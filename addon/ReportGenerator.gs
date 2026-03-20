@@ -72,7 +72,7 @@ const ReportGenerator = {
     sheet1.appendRow(["Session #", "Date", "Start", "End", "Duration", "Files", "Dominant Action"]);
     
     const sheet2 = ss.insertSheet("Activity Log");
-    sheet2.appendRow(["Session #", "Date", "Time", "Action", "File Name", "Open Link"]);
+    sheet2.appendRow(["Session #", "Date", "Time", "Action", "File Name", "Folder", "Open Link"]);
     
     let totalMinutes = 0;
     
@@ -108,7 +108,8 @@ const ReportGenerator = {
           linkVal = `=HYPERLINK("${a.webViewLink}", "Open ↗")`;
         }
         const actionStr = `${this.getActionIcon(a.actionType)} ${a.actionType}`;
-        sheet2.appendRow([sId, actDate, actTime, actionStr, a.fileName, linkVal]);
+        const folderStr = a.folderName || "My Drive";
+        sheet2.appendRow([sId, actDate, actTime, actionStr, a.fileName, folderStr, linkVal]);
       });
     });
     
@@ -132,11 +133,15 @@ const ReportGenerator = {
     };
     
     formatSheet(sheet1, [80, 120, 80, 80, 90, 60, 140]);
-    formatSheet(sheet2, [80, 100, 80, 100, 250, 90]);
+    formatSheet(sheet2, [80, 100, 80, 100, 250, 180, 90]);
     
     ss.setActiveSheet(sheet1);
     
     PropertiesService.getUserProperties().setProperty("pa_last_sheet_id", ss.getId());
+    
+    if (params.outputFormat !== "sheet_and_doc") {
+      return { sheetUrl: ss.getUrl() };
+    }
     
     // Create Google Doc
     const docName = `PA Report · ${startDateStr} to ${endDateStr}`;
@@ -160,7 +165,8 @@ const ReportGenerator = {
     const durGlobal = this.formatDuration(totalMinutes);
     const dayName = Utilities.formatDate(params.startDate, timeZone, "EEEE");
     
-    const summary = `⏱ ${durGlobal} across ${numSessions} sessions · 📁 ${allFiles.size} files (${editedCount} edited, ${createdCount} created, ${otherCount} other) · 🔥 ${dayName} most active · 📌 ${params.focus || "none"}`;
+    const scopeLabel = params.scanScope === "all_drives" ? "🗂 All Drives" : "🗂 My Drive";
+    const summary = `⏱ ${durGlobal} across ${numSessions} sessions · 📁 ${allFiles.size} files (${editedCount} edited, ${createdCount} created, ${otherCount} other) · 🔥 ${dayName} most active · ${scopeLabel}`;
     
     body.appendParagraph(summary);
     body.appendHorizontalRule();

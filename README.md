@@ -1,36 +1,83 @@
-# Personal Activity Tracking Assistant (PA)
+# PA Assistant — Personal Activity Tracker for Google Drive
 
-## Overview
+> Track what you worked on and resume where you left off.
+> Generates structured activity reports from your Google Drive.
 
-When working on multiple projects simultaneously, returning to a suspended project can often be a challenge. It is easy to lose track of where you left off, what documents you were editing, and what specific tasks were in progress. 
+## What it does
+PA Assistant connects securely to your Google Drive and aggregates all the scattered file changes you've made over a given period into a clean, concise, human-readable summary. Whether you're tracking billable hours or simply recalling where you left off in your latest sprint, this tool parses your activity logs automatically and clusters them into distinct, chronological work sessions.
 
-This repository contains the **Personal Activity Tracking Assistant**, a tool designed to solve this exact problem by helping you reconstruct your workflow and seamlessly pick up right where you left off.
+## Features
+- **Sessionization**: Intelligently groups rapid sequential edits on the same file into unified work blocks gracefully defining continuous tracking chunks.
+- **Deep Drive Support**: Natively accesses My Drive folders alongside Shared Drives extracting real hierarchical system pathways mapping identically into human outputs.
+- **Visual Folder Selection**: Utilizes a fully interactive native Google Picker allowing granular scoping explicitly on targeted folders bypassing rigid search constraints.
+- **Dynamic Outputs**: Generates comprehensive Google Sheets equipped with distinct overview reports alongside robust chronological Activity Logs, strictly augmented by optional rich Markdown-style Google Docs text reports.
 
-## The Rationale
+## Two ways to use it
 
-Context switching is a reality for most professionals. We juggle multiple tasks, and invariably, some projects get paused while others take priority. When the time comes to resume a suspended project, the mental effort required to reload the project context can be significant.
+### Option 1: Google Docs Add-on (recommended)
+No installation required. Works directly in Google Docs.
+1. Deploy the Add-on explicitly pointing your Google Account context natively to the `addon/` root scripts via Google Apps Script. 
+2. Set your `DEVELOPER_KEY` configuration natively in the Editor's Script Properties.
+3. Open any Google Document, click **Extensions** > **PA Assistant** > **Open Sidebar**.
+4. Configure your scan period, optional specific drives (via the Picker UI), and generate the final layout outputs completely automatically directly into your Drive environment!
 
-### Best Practices for Context Switching
-Ideally, every time you pause a project, you should:
-1. **Create a Backlog & Pass-Over Document:** Draft a clear reminder document indicating exactly what has been completed.
-2. **Document the Next Steps:** Outline a concrete plan for what needs to be done next.
-3. **Trace Your Steps:** Recall which files you were working on and in what sequence, as this paints a picture of your thought process.
+### Option 2: Python CLI (for developers)
+Run PA Assistant fully headless driving complex execution queries natively mapping JSON configuration contexts dynamically from your terminal.
 
-While maintaining pass-over documents is the gold standard, it is sometimes difficult to maintain discipline. That is where observing your digital footprints becomes incredibly useful.
+## Setup (CLI only)
 
-## What This Tool Does
+### Prerequisites
+- Python 3.10+
+- Google Cloud Project with Drive API and Drive Activity API enabled
+- OAuth 2.0 credentials (`client_secret.json`)
 
-The Personal Activity Tracking Assistant connects to your primary workspaces—specifically designed around **Google Drive workflows**—to automatically retrieve and compile your activity history over a specified period.
+### Installation
+```bash
+git clone https://github.com/asoshnin/PersonalWorkTracker4GoogleDrive
+cd PersonalWorkTracker4GoogleDrive
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+cp pa_config.example.yaml pa_config.yaml
+# Edit pa_config.yaml with your paths
+python setup_auth.py
+```
 
-It generates a concise, readable summary report of your recent activities. By looking at exactly which files were modified, created, or reviewed, and in what order, you can effortlessly piece together the context of your previous work sessions.
+### Usage
+```bash
+# Last 24 hours
+python -m pa_assistant.cli --period today
 
-## Why It Is Useful
+# Last week
+python -m pa_assistant.cli --period last-week
 
-- **Instant Context Restoration:** Instead of wondering "What was I doing last week?", you get a chronological snapshot of your work.
-- **Effortless Handovers (to yourself):** It acts as an automated pass-over document, capturing the breadcrumbs of your workflow even if you forgot to write a formal reminder.
-- **Enhanced Productivity:** Reduces the cognitive overhead of task resumption, allowing you to dive back into deep work immediately.
-- **Built for Google Drive:** Integrates with where your work actually happens, making it a natural fit for Google Drive-centric workflows.
+# Custom date range
+python -m pa_assistant.cli --start-date 2026-03-01 --end-date 2026-03-20
+```
 
----
+## Add-on Setup (for developers who want to self-host)
+To deploy the Google Apps Script natively independently resolving local builds:
+1. Ensure your Google Cloud Project has **Google Drive API**, **Google Drive Activity API**, and **Google Docs API** broadly enabled securely within the GCP constraints.
+2. Initialize and deploy `addon/` executing `clasp push -f` straight into your new Script environment.
+3. In the Apps Script Editor, traverse mapping **Project Settings** > **Script Properties**.
+4. Insert exactly `DEVELOPER_KEY` securely caching your specific active Google Picker API configuration string.
 
-*Note: Technical implementation details have deliberately been omitted from this document as this tool is currently evolving into a more user-friendly, native add-on for Google Drive.*
+## Configuration reference
+| Key | Description | Default |
+|-----|-------------|---------|
+| `auth.client_secrets_file` | Absolute path mapping `client_secret.json` parameters. | `client_secret.json` |
+| `auth.token_file` | Dynamic Output mapping parsing OAuth cache targets. | `token.json` |
+| `output.dir` | Raw local filesystem root compiling CLI JSON log executions. | `reports` |
+| `preferences.session_gap_minutes` | Number modeling grouping tolerance collapsing sequential Drive activity strings dynamically. | `30` |
+
+## Project structure
+- `addon/`: Source files explicitly defining the entire Google Apps Script HTML / GS logic deploying native modal Picker scopes securely mapping Sidebars directly.
+- `pa_assistant/`: Root Python engine scripts evaluating Drive APIs headless iterating `Processor` heuristics manually.
+- `tests/`: Structural Python test benches enforcing offline module resolutions cleanly.
+- `pa_config.yaml`: The exclusive config map declaring internal system parameters securely away from GitHub version controls.
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+MIT License
