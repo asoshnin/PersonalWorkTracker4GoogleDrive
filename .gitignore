@@ -17,6 +17,7 @@ env/
 # Config and secrets
 pa_config.yaml
 token.json
+client_secret.json
 *.json.key
 addon/config.js
 

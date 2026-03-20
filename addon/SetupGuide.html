@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= HtmlService.createHtmlOutputFromFile('Stylesheet').getContent(); ?>
+  <style>
+    body { padding: 20px; font-family: 'Google Sans', Roboto, Arial, sans-serif; line-height: 1.5; color: #3c4043; }
+    h1 { font-size: 20px; color: #202124; margin-bottom: 16px; }
+    h2 { font-size: 16px; color: #1a73e8; margin-top: 24px; margin-bottom: 12px; border-bottom: 1px solid #f1f3f4; padding-bottom: 4px; }
+    p, li { font-size: 14px; margin-bottom: 8px; }
+    ol { margin-left: 20px; }
+    .close-btn-container { margin-top: 40px; text-align: right; border-top: 1px solid #e0e0e0; padding-top: 16px; }
+    .close-btn { background: #f1f3f4; color: #3c4043; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 500; cursor: pointer; }
+    .close-btn:hover { background: #e8eaed; }
+  </style>
+</head>
+<body>
+  <h1>PA Assistant Setup Guide</h1>
+  <p>Welcome to PA Assistant! Before scanning specific Drive folders, you must execute a one-time configuration mapping securely tying your Workspace environment into Google Cloud APIs.</p>
+
+  <h2>Phase 1: Create a Google Cloud Project</h2>
+  <ol>
+    <li>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a>.</li>
+    <li>Click <strong>New Project</strong>. Name it "PA Assistant Cloud" and create it.</li>
+    <li>Go to <strong>APIs & Services → Library</strong>.</li>
+    <li>Enable the <strong>Google Drive API</strong>, <strong>Google Drive Activity API</strong>, and <strong>Google Picker API</strong>.</li>
+  </ol>
+
+  <h2>Phase 2: Link Apps Script to Cloud</h2>
+  <ol>
+    <li>In Google Cloud Console, click <strong>Project settings</strong> (three dots top right). Copy the "Project number".</li>
+    <li>In your Apps Script Editor, click <strong>Project Settings (⚙️)</strong>.</li>
+    <li>Under "Google Cloud Platform (GCP) Project", click <strong>Change project</strong>.</li>
+    <li>Paste your Project number to link them.</li>
+  </ol>
+
+  <h2>Phase 3: Get a Picker API Key</h2>
+  <ol>
+    <li>In Google Cloud Console, go to <strong>APIs & Services → Credentials</strong>.</li>
+    <li>Click <strong>Create Credentials → API Key</strong>.</li>
+    <li>Copy the string provided.</li>
+  </ol>
+
+  <h2>Phase 4: Set the Developer Key</h2>
+  <ol>
+    <li>In Apps Script Editor, click <strong>Project Settings (⚙️)</strong>.</li>
+    <li>Scroll to <strong>Script Properties</strong> and click <strong>Add script property</strong>.</li>
+    <li>Set the property name to exactly: <code>DEVELOPER_KEY</code></li>
+    <li>Paste the API Key from Phase 3 into the Value box and save.</li>
+  </ol>
+  
+  <h2>Team Sharing</h2>
+  <ol>
+    <li>Your team does <em>not</em> need to repeat these steps!</li>
+    <li>In Apps Script Editor, click <strong>Share</strong> (top right).</li>
+    <li>Add your colleagues' Google emails as Editor or Viewer.</li>
+    <li>They can now open the Sidebar natively from Google Docs!</li>
+  </ol>
+
+  <div class="close-btn-container">
+    <button class="close-btn" onclick="google.script.host.close()">Close Guide</button>
+  </div>
+</body>
+</html>

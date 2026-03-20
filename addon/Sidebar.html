@@ -11,6 +11,23 @@
         <div class="subtitle" id="timezoneLabel">Loading timezone...</div>
       </div>
 
+      <!-- Onboarding Overlay -->
+      <div id="onboardingSection" class="overlay hidden">
+        <div class="onboarding-icon">🚀</div>
+        <div class="onboarding-title">Welcome to PA Assistant!</div>
+        <div class="onboarding-content">
+          <div class="onboarding-item">
+            <span>📊</span>
+            <div><strong>Activity Tracker:</strong> Automatically group your Drive work into sessions and generate reports.</div>
+          </div>
+          <div class="onboarding-item">
+            <span>✨</span>
+            <div><strong>Document Cleaner:</strong> Use the 'Clean Up' menu under Extensions to strip citations or notes.</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="dismissOnboarding()">Get Started</button>
+      </div>
+
       <div class="section" id="generateSection">
         <label for="period">Period</label>
         <select id="period" class="full-width">
@@ -68,6 +85,12 @@
         <p class="success-text">Report ready!</p>
       </div>
       
+      <div id="setupRequiredState" class="state-container hidden" style="text-align: center; margin-top: 40px;">
+        <h3 style="color: #d93025; margin-bottom: 12px; font-weight: 500;">Setup Required</h3>
+        <p style="font-size: 13px; color: #5f6368; margin-bottom: 20px;">A Developer Key configuration is missing. You must map your Google Cloud API explicitly before scanning specific Drive folders securely.</p>
+        <button id="openGuideBtn" class="btn-primary" onclick="openSetupGuide()">📖 Open Setup Guide</button>
+      </div>
+
       <div id="errorState" class="state-container hidden">
         <p id="errorMsg" class="error-text"></p>
       </div>
@@ -79,9 +102,14 @@
         <button id="openSheetBtn" class="btn-secondary" onclick="openSheet()">📊 Open Last Sheet</button>
         <p class="meta-text" id="generatedTime"></p>
       </div>
+
+      <div class="footer" style="position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 13px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+        <a href="#" onclick="openSetupGuide(); return false;" style="color: #1a73e8; text-decoration: none;">❓ Help / Setup Guide</a>
+      </div>
     </div>
 
     <script>
+      let DEVELOPER_KEY = '';
       let selectedFolderId = "";
       let selectedFolderName = "";
       let lastDocUrl = "";
@@ -91,7 +119,33 @@
         google.script.run.withSuccessHandler(function(tz) {
           document.getElementById('timezoneLabel').textContent = tz;
         }).getUserTimezone();
+        
+        google.script.run.withSuccessHandler(function(key) {
+          DEVELOPER_KEY = key;
+          if (!DEVELOPER_KEY) {
+            document.getElementById('generateSection').classList.add('hidden');
+            document.getElementById('setupRequiredState').classList.remove('hidden');
+          } else {
+            // Priority check: Developer Key first, then Welcome screen
+            google.script.run.withSuccessHandler(function(hasSeen) {
+              if (hasSeen === false) {
+                document.getElementById('generateSection').classList.add('hidden');
+                document.getElementById('onboardingSection').classList.remove('hidden');
+              }
+            }).checkFirstRun();
+          }
+        }).getDeveloperKey();
       };
+
+      function dismissOnboarding() {
+        document.getElementById('onboardingSection').classList.add('hidden');
+        document.getElementById('generateSection').classList.remove('hidden');
+        google.script.run.setWelcomeSeen();
+      }
+      
+      function openSetupGuide() {
+        google.script.run.showSetupGuide();
+      }
       
       function togglePickerUI() {
         const scope = document.querySelector('input[name="scanScope"]:checked').value;

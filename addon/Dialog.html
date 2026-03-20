@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { 
+        font-family: Arial, sans-serif; 
+        margin: 20px; 
+        background-color: #f8f9fa; /* Light background */
+        color: #333; /* Darker text */
+      }
+      h2 {
+        color: #4a86e8; /* Google Blue */
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+      }
+      label { 
+        display: block; 
+        margin-top: 15px; 
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+      input[type="text"] { 
+        width: calc(100% - 20px); 
+        padding: 10px; 
+        margin-top: 5px; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+      }
+      .button-container {
+        margin-top: 25px;
+        text-align: right;
+      }
+      button { 
+        padding: 10px 18px; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        font-size: 0.95em;
+        transition: background-color 0.2s ease-in-out;
+      }
+      #deleteBtn { 
+        background-color: #4CAF50; /* Green */
+        color: white; 
+      }
+      #deleteBtn:hover {
+        background-color: #45a049;
+      }
+      #cancelBtn { 
+        background-color: #f44336; /* Red */
+        color: white; 
+        margin-left: 10px; 
+      }
+      #cancelBtn:hover {
+        background-color: #e53935;
+      }
+      .info {
+        font-size: 0.85em;
+        color: #555;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Configure Substring Deletion</h2>
+    
+    <label for="startSeq">Starting Sequence:</label>
+    <input type="text" id="startSeq" name="startSeq" value="[">
+    <div class="info">e.g., "[", "{", "[cite:", "START_TAG"</div>
+    
+    <label for="endSeq">Ending Sequence:</label>
+    <input type="text" id="endSeq" name="endSeq" value="]">
+    <div class="info">e.g., "]", "}", "END_TAG"</div>
+    
+    <label for="condition">Condition (Optional):</label>
+    <input type="text" id="condition" name="condition" placeholder="e.g., 'TODO', 'internal_note'">
+    <div class="info">If provided, only substrings containing this text will be deleted.</div>
+    
+    <div class="button-container">
+      <button id="deleteBtn" onclick="submitForm()">Delete Substrings</button>
+      <button id="cancelBtn" onclick="google.script.host.close()">Cancel</button>
+    </div>
+
+    <script>
+      function submitForm() {
+        const startSeq = document.getElementById('startSeq').value;
+        const endSeq = document.getElementById('endSeq').value;
+        const condition = document.getElementById('condition').value;
+        
+        if (!startSeq.trim() || !endSeq.trim()) {
+          alert("Starting and ending sequences cannot be empty.");
+          return;
+        }
+        
+        // Disable button to prevent multiple submissions
+        document.getElementById('deleteBtn').disabled = true;
+        document.getElementById('deleteBtn').textContent = 'Processing...';
+
+        google.script.run
+          .withSuccessHandler(function(msg) {
+            // console.log(msg); // Log success message from server
+            google.script.host.close();
+            // The server-side script (deleteSubstrings) will show its own final alert.
+          })
+          .withFailureHandler(function(err) {
+            alert("Error submitting to script: " + err.message);
+            // Re-enable button on failure
+            document.getElementById('deleteBtn').disabled = false;
+            document.getElementById('deleteBtn').textContent = 'Delete Substrings';
+            google.script.host.close(); // Close dialog even on failure to avoid confusion
+          })
+          .processDeletion(startSeq, endSeq, condition);
+      }
+
+      // Optional: Add event listener for Enter key on input fields
+      document.addEventListener('DOMContentLoaded', (event) => {
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => {
+          input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              submitForm();
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
